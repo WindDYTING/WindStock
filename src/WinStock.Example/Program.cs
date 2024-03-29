@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using WindStock;
 using WindStock.Models;
@@ -16,7 +15,7 @@ namespace WinStock.Example
         {
             var crawler = new TwStockCrawler();
 
-            var data = crawler.GetAsync("2330", TradeType.TSE).Result;
+            var data = crawler.Get("2330", TradeType.TSE);
 
             Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
 

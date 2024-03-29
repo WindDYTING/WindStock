@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using WindStock.Models;
 
 namespace WindStock
 {
@@ -6,5 +7,7 @@ namespace WindStock
     {
         Task<TData> GetAsync(string commId, TradeType tradeType);
         Task<TData> GetAsync(string commId);
+        TwSourceStockData Get(string commId);
+        TwSourceStockData Get(string commId, TradeType tradeType);
     }
 }

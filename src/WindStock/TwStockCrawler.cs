@@ -23,7 +23,24 @@ namespace WindStock
         {
             Preconditions.NotNullOrEmpty(commId);
 
-            var raw = await GetRawData(commId, tradeType);
+            var raw = await GetRawDataAsync(commId, tradeType);
+
+            var value = raw["msgArray"][0].ToString();
+            var msgArray = JsonConvert.DeserializeObject<TwSourceStockData>(value);
+
+            return msgArray;
+        }
+
+        public TwSourceStockData Get(string commId)
+        {
+            return Get(commId, TradeType.TSE);
+        }
+
+        public TwSourceStockData Get(string commId, TradeType tradeType)
+        {
+            Preconditions.NotNullOrEmpty(commId);
+
+            var raw = GetRawData(commId, tradeType);
 
             var value = raw["msgArray"][0].ToString();
             var msgArray = JsonConvert.DeserializeObject<TwSourceStockData>(value);
@@ -36,7 +53,7 @@ namespace WindStock
             return GetAsync(commId, TradeType.TSE);
         }
 
-        private async Task<IDictionary<string, JToken>> GetRawData(string commId, TradeType tradeType)
+        private IDictionary<string, JToken> GetRawData(string commId, TradeType tradeType)
         {
             if (!TwCommodities.AllStocks.ContainsKey(commId))
             {
@@ -50,7 +67,30 @@ namespace WindStock
             }
             catch
             {
-                
+                // ban
+            }
+
+            var req2 = new RestRequest(string.Format(StockInfoUrl, $"{tradeType.ToString().ToLower()}_{commId}.tw", DateTimeOffset.Now.ToUnixTimeMilliseconds()));
+            var resp = Web.Get(req2);
+
+            return JsonConvert.DeserializeObject<IDictionary<string, JToken>>(resp.Content);
+        }
+
+        private async Task<IDictionary<string, JToken>> GetRawDataAsync(string commId, TradeType tradeType)
+        {
+            if (!TwCommodities.AllStocks.ContainsKey(commId))
+            {
+                throw new ArgumentException("commId does not exist", commId);
+            }
+
+            try
+            {
+                var req = new RestRequest(SessionUrl);
+                Web.Get(req);
+            }
+            catch
+            {
+                // ban
             }
 
             var req2 = new RestRequest(string.Format(StockInfoUrl, $"{tradeType.ToString().ToLower()}_{commId}.tw", DateTimeOffset.Now.ToUnixTimeMilliseconds()));
