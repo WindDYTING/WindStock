@@ -12,6 +12,7 @@ namespace WindStock
 
         private readonly ConcurrentDictionary<SubscribeKey, IObserver<TwSourceStockData>> _allSubscribe = new ();
 
+        private int _exchangeThreadFlag;
         private Thread _exchangeThread;
 
         public TwStockExchange(ICrawler<TwSourceStockData> crawler)
@@ -61,7 +62,7 @@ namespace WindStock
 
         private void EnsureStartExchange()
         {
-            if (_exchangeThread == null)
+            if (Interlocked.CompareExchange(ref _exchangeThreadFlag, 1, 0) == 0)
             {
                 _exchangeThread = new Thread(StartExchange)
                 {
@@ -71,15 +72,17 @@ namespace WindStock
             }
         }
 
-        private async void StartExchange()
+        private void StartExchange()
         {
             while (true)
             {
+                SpinWait.SpinUntil(() => !TwStockUtils.IsClose());
+
                 foreach (var (key, o) in _allSubscribe)
                 {
                     try
                     {
-                        var data = await _crawler.GetAsync(key.CommId, key.TType);
+                        var data = _crawler.Get(key.CommId, key.TType);
                         o.OnNext(data);
                     }
                     catch (HttpRequestException)
@@ -92,7 +95,7 @@ namespace WindStock
                     }
                 }
 
-                SpinWait.SpinUntil(() => false, 1000);
+                SpinWait.SpinUntil(() => false, 500);
             }
         }
 
