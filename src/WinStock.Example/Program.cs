@@ -1,41 +1,50 @@
 ﻿using System;
-using System.Threading;
 using Newtonsoft.Json;
 using WindStock;
 using WindStock.Models;
 
 namespace WinStock.Example
 {
-    class Program
+    public class Program
     {
-        private static TwStockExchange _exchange;
-        private static CancellationTokenSource _cts = new CancellationTokenSource();
-
         static void Main(string[] args)
         {
-            var crawler = new TwStockCrawler();
+            TwStockExample();
 
-            var data = crawler.Get("2330", TradeType.TSE);
+            AnueExample();
 
-            Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
-
-            _exchange = new TwStockExchange(crawler);
-            _exchange.Subscribe("2330", TradeType.TSE, OnMessage);
-
-            Console.CancelKeyPress += ConsoleOnCancelKeyPress;
-
-            SpinWait.SpinUntil(() => _cts.IsCancellationRequested);
+            Console.Read();
         }
 
-        private static void ConsoleOnCancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        private static void TwStockExample()
         {
-            _exchange.Dispose();
-            _cts.Cancel(false);
+            var twStockCrawler = new TwStockCrawler();
+            var twStock = twStockCrawler.Get("2330", TradeType.TSE);
+            Console.Write(JsonConvert.SerializeObject(twStock, Formatting.Indented));
+
+            var twStockExchange = new TwStockExchange(twStockCrawler);
+            twStockExchange.Subscribe("2330", TradeType.TSE, OnMessage);
         }
 
-        private static void OnMessage(TwSourceStockData data)
+        private static void AnueExample()
         {
-            Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
+            var anueStockCrawler = new AnueStockCrawler();
+
+            var anueData = anueStockCrawler.Get("2330", TradeType.TSE);
+            Console.Write(JsonConvert.SerializeObject(anueData, Formatting.Indented));
+
+            var anueStockExchange = new AnueStockExchange(anueStockCrawler);
+            anueStockExchange.Subscribe("2330", TradeType.TSE, OnMessage);
+        }
+
+        private static void OnMessage(TwSourceStockData obj)
+        {
+            Console.Write(JsonConvert.SerializeObject(obj, Formatting.Indented));
+        }
+
+        private static void OnMessage(AnueSourceStockData data)
+        {
+            Console.Write(JsonConvert.SerializeObject(data, Formatting.Indented));
         }
     }
 }

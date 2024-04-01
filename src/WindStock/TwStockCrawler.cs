@@ -8,11 +8,11 @@ using WindStock.Models;
 
 namespace WindStock
 {
-    public class TwStockCrawler : ICrawler<TwSourceStockData>
+    public class TwStockCrawler : ICrawler<TwSourceStockData>, IDisposable
     {
         public const string SessionUrl = "https://mis.twse.com.tw/stock/index.jsp";
         public const string StockInfoUrl = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={0}&json=1&delay=0_&={1}";
-        private static RestClient Web { get; } = new();
+        private RestClient Web { get; } = RestClientFactory.Get(typeof(TwStockCrawler));
 
         public TwStockCrawler()
         {
@@ -97,6 +97,11 @@ namespace WindStock
             var resp = await Web.GetAsync(req2);
 
             return JsonConvert.DeserializeObject<IDictionary<string, JToken>>(resp.Content);
+        }
+
+        public void Dispose()
+        {
+            RestClientFactory.Returns(typeof(TwSourceStockData));
         }
     }
 }
